@@ -9,29 +9,19 @@ using PythonCall
 
 const Translator = PythonCall.pynew()
 
-#=
-function _translate(args...)
-    identity(args...)
-end
-=#
-
-function _translate(s::String, dest, src="en")
+function _translate(s::String, dest, src = "en")
     translator = Translator()
-    trans_text = translator.translate(
-        s,
-        src=src,
-        dest=dest,
-    )
+    trans_text = translator.translate(s, src = src, dest = dest)
     pyconvert(String, trans_text.text)
 end
 
-function _translate(docstr::Markdown.MD, dest, src="en")
+function _translate(docstr::Markdown.MD, dest, src = "en")
     for d in docstr.content
         for c in d.content
             if c isa Markdown.Paragraph
                 paragraph = c.content
                 for i in eachindex(paragraph)
-                    p = paragraph[i]                    
+                    p = paragraph[i]
                     if p isa String
                         paragraph[i] = _translate(p, dest, src)
                     end
@@ -89,7 +79,7 @@ macro revertlang!()
     end
 end
 
-function __init__() 
+function __init__()
     PythonCall.pycopy!(Translator, pyimport("googletrans").Translator)
 end
 
