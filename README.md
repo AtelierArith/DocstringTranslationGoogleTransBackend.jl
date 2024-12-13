@@ -12,6 +12,24 @@ $ julia --project -e 'using Pkg; Pkg.instantiate()'
 
 # Usage
 
+Start Julia
+
+```sh
+$ cd path/to/this/directory
+$ ls
+Manifest.toml Project.toml  README.md     src
+$ julia --project 
+```
+
+This will launch a Julia REPL session. Then run the following commands in the Julia REPL session:
+
+```julia
+julia> using DocstringTranslationGoogleTransBackend
+julia> @switchlang! :<TargetLanguage>
+julia> # Ask something
+julia> @doc sin
+```
+
 ## Example: Japanese(日本語)
 
 ```julia
@@ -24,7 +42,7 @@ $ julia --project -e 'using Pkg; Pkg.instantiate()'
  _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
 |__/                   |
 
-julia> using Revise; using DocstringTranslationGoogleTransBackend; @switchlang! :Japanese; @doc sin
+julia> using DocstringTranslationGoogleTransBackend; @switchlang! :Japanese; @doc sin
   sin(x)
 
   x の正弦を計算します。x の単位はラジアンです。
@@ -84,7 +102,7 @@ julia>
  _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
 |__/                   |
 
-julia> using Revise; using DocstringTranslationGoogleTransBackend; @switchlang! :German; @doc sin
+julia> using DocstringTranslationGoogleTransBackend; @switchlang! :German; @doc sin
   sin(x)
 
   Berechnen Sie den Sinus von „x“, wobei „x“ im Bogenmaß angegeben ist.
@@ -144,7 +162,7 @@ julia>
  _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
 |__/                   |
 
-julia> using Revise; using DocstringTranslationGoogleTransBackend; @switchlang! :French; @doc sin
+julia> using DocstringTranslationGoogleTransBackend; @switchlang! :French; @doc sin
   sin(x)
 
   Calculez le sinus de x. Les unités de `x` sont les radians.
