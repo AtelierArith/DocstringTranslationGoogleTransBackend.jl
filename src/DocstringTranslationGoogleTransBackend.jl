@@ -4,19 +4,21 @@ using Base.Docs: DocStr
 using Markdown: Markdown
 
 include("LocalizedLiterals.jl")
-using .LocalisedLiterals: LocalisedLiterals
+using .LocalisedLiterals: LocalisedLiterals, ALL_LANGUAGES_DICT
+
+const DEFAULT_LANG = Ref{String}("en")
 
 export @switchlang!, @revertlang!
 
 function tocode(s)
-    m = match(r"`\s*(.*?)\s*`", s)
+    m = match(r"```\s*(.*?)\s*```", s)
     isnothing(m) && return s
-    Markdown.Code("", replace(s, r"`\s*(.*?)\s*`"m => s"\1"))
+    Markdown.Code("", replace(s, r"```\s*(.*?)\s*```"m => s"\1"))
 end
 
 preprocess(c) = c
 preprocess(c::Markdown.LaTeX) = c
-preprocess(c::Markdown.Code) = "`" * c.code * "`"
+preprocess(c::Markdown.Code) = "```" * c.code * "```"
 function preprocess(c::Markdown.Link)
     map(c.text) do t
         preprocess(t)
@@ -37,9 +39,9 @@ function translate!(p::Markdown.Paragraph)
     end
 
     t = join(pnew)
-    t = LocalisedLiterals.translate("ja", t)
-    # for instance "`x`" => "\n`x`\n"
-    ts = split(replace(t, r"`\s*(.*?)\s*`"m => s"\n`\1`\n"), "\n")
+    t = LocalisedLiterals.translate(DEFAULT_LANG[], t)
+    # for instance "```x```" => "\n```x```\n"
+    ts = split(replace(t, r"```\s*(.*?)\s*```"m => s"\n```\1```\n"), "\n")
     ts = filter(ts) do t
         !isempty(t)
     end
@@ -47,7 +49,7 @@ function translate!(p::Markdown.Paragraph)
 end
 
 # Translate
-translate!(s::String) = LocalisedLiterals.translate("ja", s)
+translate!(s::String) = LocalisedLiterals.translate(DEFAULT_LANG[], s)
 function translate!(li::Markdown.List)
     for iter in li.items
         for i in iter
@@ -62,12 +64,26 @@ function translate_with_googletrans(md::Markdown.MD, lang)
     md
 end
 
+function switchlang!(lang::Union{String,Symbol})
+    DEFAULT_LANG[] = only(ALL_LANGUAGES_DICT[String(lang)])
+end
+
+function switchlang!(node::QuoteNode)
+    lang = node.value
+    switchlang!(lang)
+end
+
+function default_lang()
+    return DEFAULT_LANG[]
+end
+
 """
 	@switchlang!(lang)
 
 Modify Docs.parsedoc(d::DocStr) to insert translation engine.
 """
 macro switchlang!(lang)
+    switchlang!(lang)
     @eval function Docs.parsedoc(d::DocStr)
         if d.object === nothing
             md = Docs.formatdoc(d)
@@ -86,6 +102,7 @@ re-evaluate original implementation for
 Docs.parsedoc(d::DocStr)
 """
 macro revertlang!()
+    switchlang!("English")
     @eval function Docs.parsedoc(d::DocStr)
         if d.object === nothing
             md = Docs.formatdoc(d)
