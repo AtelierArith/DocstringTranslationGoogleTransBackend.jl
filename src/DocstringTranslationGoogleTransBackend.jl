@@ -3,44 +3,78 @@ module DocstringTranslationGoogleTransBackend
 using Base.Docs: DocStr
 using Markdown: Markdown
 
+include("LocalizedLiterals.jl")
+using .LocalisedLiterals: LocalisedLiterals, ALL_LANGUAGES_DICT
+
+const DEFAULT_LANG = Ref{String}("en")
+
 export @switchlang!, @revertlang!
 
-using PythonCall
-
-const Translator = PythonCall.pynew()
-
-function _translate(s::String, dest, src = "en")
-    translator = Translator()
-    trans_text = translator.translate(s, src = src, dest = dest)
-    pyconvert(String, trans_text.text)
+function tocode(s)
+    m = match(r"```\s*(.*?)\s*```", s)
+    isnothing(m) && return s
+    Markdown.Code("", replace(s, r"```\s*(.*?)\s*```"m => s"\1"))
 end
 
-function _translate(docstr::Markdown.MD, dest, src = "en")
-    for d in docstr.content
-        for c in d.content
-            if c isa Markdown.Paragraph
-                paragraph = c.content
-                for i in eachindex(paragraph)
-                    p = paragraph[i]
-                    if p isa String
-                        paragraph[i] = _translate(p, dest, src)
-                    end
-                end
-            end
+preprocess(c) = c
+preprocess(c::Markdown.LaTeX) = c
+preprocess(c::Markdown.Code) = "```" * c.code * "```"
+function preprocess(c::Markdown.Link)
+    map(c.text) do t
+        preprocess(t)
+    end |> join
+end
+translate!(c) = c
+function translate!(md::Markdown.MD)
+    for c in md.content
+        translate!(c)
+    end
+    md
+end
+translate!(c::Markdown.Code) = c
+translate!(c::Markdown.Header{n}) where {n} = c
+function translate!(p::Markdown.Paragraph)
+    pnew = map(p.content) do c
+        preprocess(c)
+    end
+
+    t = join(pnew)
+    t = LocalisedLiterals.translate(DEFAULT_LANG[], t)
+    # for instance "```x```" => "\n```x```\n"
+    ts = split(replace(t, r"```\s*(.*?)\s*```"m => s"\n```\1```\n"), "\n")
+    ts = filter(ts) do t
+        !isempty(t)
+    end
+    p.content = Markdown.Paragraph(tocode.(ts)).content
+end
+
+# Translate
+translate!(s::String) = LocalisedLiterals.translate(DEFAULT_LANG[], s)
+function translate!(li::Markdown.List)
+    for iter in li.items
+        for i in iter
+            translate!(i)
         end
     end
-    docstr
 end
 
 
-function translate_with_googletrans(inp::Markdown.MD, lang)
-    _translate(inp, lang)
-end
-
-function translate_with_ai(md::Markdown.MD, lang)
-    translated_md = translate_with_googletrans(md, lang)
-    md.content = translated_md.content
+function translate_with_googletrans(md::Markdown.MD, lang)
+    translate!(md)
     md
+end
+
+function switchlang!(lang::Union{String,Symbol})
+    DEFAULT_LANG[] = only(ALL_LANGUAGES_DICT[String(lang)])
+end
+
+function switchlang!(node::QuoteNode)
+    lang = node.value
+    switchlang!(lang)
+end
+
+function default_lang()
+    return DEFAULT_LANG[]
 end
 
 """
@@ -49,6 +83,7 @@ end
 Modify Docs.parsedoc(d::DocStr) to insert translation engine.
 """
 macro switchlang!(lang)
+    switchlang!(lang)
     @eval function Docs.parsedoc(d::DocStr)
         if d.object === nothing
             md = Docs.formatdoc(d)
@@ -56,7 +91,7 @@ macro switchlang!(lang)
             md.meta[:path] = d.data[:path]
             d.object = md
         end
-        translate_with_ai(d.object, string($(lang)))
+        translate_with_googletrans(d.object, string($(lang)))
     end
 end
 
@@ -67,7 +102,7 @@ re-evaluate original implementation for
 Docs.parsedoc(d::DocStr)
 """
 macro revertlang!()
-
+    switchlang!("English")
     @eval function Docs.parsedoc(d::DocStr)
         if d.object === nothing
             md = Docs.formatdoc(d)
@@ -80,7 +115,7 @@ macro revertlang!()
 end
 
 function __init__()
-    PythonCall.pycopy!(Translator, pyimport("googletrans").Translator)
+    #PythonCall.pycopy!(Translator, pyimport("googletrans").Translator)
 end
 
 end # module DocstringTranslationGoogleTransBackend

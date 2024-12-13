@@ -1,6 +1,34 @@
 # DocstringTranslationGoogleTransBackend.jl
 
-This package translates Julia's docstring in your native languages using Python library [googletrans](https://py-googletrans.readthedocs.io/en/latest/). The Python library calls Google Translate Ajax API to make calls to such methods as detect and translate.
+This package translates Julia's docstring in your native languages using Google Translate API to make calls to such methods as detect and translate. The idea is based on [henrik-wolf/LocalisedLiterals.jl](https://github.com/henrik-wolf/LocalisedLiterals.jl) repository.
+
+## Setup
+
+```julia
+$ git clone https://github.com/AtelierArith/DocstringTranslationGoogleTransBackend.jl.git
+$ cd DocstringTranslationGoogleTransBackend.jl
+$ julia --project -e 'using Pkg; Pkg.instantiate()'
+```
+
+# Usage
+
+Start Julia
+
+```sh
+$ cd path/to/this/directory
+$ ls
+Manifest.toml Project.toml  README.md     src
+$ julia --project 
+```
+
+This will launch a Julia REPL session. Then run the following commands in the Julia REPL session:
+
+```julia
+julia> using DocstringTranslationGoogleTransBackend
+julia> @switchlang! :<TargetLanguage>
+julia> # Ask something
+julia> @doc sin
+```
 
 ## Example: Japanese(日本語)
 
@@ -10,16 +38,16 @@ This package translates Julia's docstring in your native languages using Python 
   (_)     | (_) (_)    |
    _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
   | | | | | | |/ _` |  |
-  | | |_| | | | (_| |  |  Version 1.11.1 (2024-10-16)
+  | | |_| | | | (_| |  |  Version 1.11.2 (2024-12-01)
  _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
 |__/                   |
 
 julia> using DocstringTranslationGoogleTransBackend; @switchlang! :Japanese; @doc sin
   sin(x)
 
-  ofのサインを計算しますx、 どこxラジアンです。
+  x の正弦を計算します。x の単位はラジアンです。
 
-  参照してくださいsind、sinpi、sincos、cis、asin。
+  sind、sinpi、sincos、cis、asin も参照してください。
 
   Examples
   ≡≡≡≡≡≡≡≡
@@ -45,9 +73,11 @@ julia> using DocstringTranslationGoogleTransBackend; @switchlang! :Japanese; @do
 
   sin(A::AbstractMatrix)
 
-  正方行列のマトリックス正弦を計算しますA。
+  正方行列 ``A`` の行列正弦を計算します。
 
-  もしA対称またはハーミット、その固有カムポジション（eigen）サインの計算に使用されます。それ以外の場合、サインは呼び出しによって決定されますexp。
+  A が対称またはエルミートの場合、その固有分解 (eigen)
+  を使用してサインが計算されます。それ以外の場合、正弦は exp
+  を呼び出すことによって決定されます。
 
   Examples
   ≡≡≡≡≡≡≡≡
@@ -56,6 +86,8 @@ julia> using DocstringTranslationGoogleTransBackend; @switchlang! :Japanese; @do
   2×2 Matrix{Float64}:
    0.454649  0.454649
    0.454649  0.454649
+
+julia>
 ```
 
 ## Example: German(ドイツ語)
@@ -66,16 +98,16 @@ julia> using DocstringTranslationGoogleTransBackend; @switchlang! :Japanese; @do
   (_)     | (_) (_)    |
    _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
   | | | | | | |/ _` |  |
-  | | |_| | | | (_| |  |  Version 1.11.1 (2024-10-16)
+  | | |_| | | | (_| |  |  Version 1.11.2 (2024-12-01)
  _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
 |__/                   |
 
 julia> using DocstringTranslationGoogleTransBackend; @switchlang! :German; @doc sin
   sin(x)
 
-  Berechnen Sie Sinus vonx, Woxist in Radians.
+  Berechnen Sie den Sinus von „x“, wobei „x“ im Bogenmaß angegeben ist.
 
-  Siehe auchsindAnwesendsinpiAnwesendsincosAnwesendcisAnwesendasin.
+  Siehe auch „sind“, „sinpi“, „sincos“, „cis“, „asin“.
 
   Examples
   ≡≡≡≡≡≡≡≡
@@ -101,10 +133,11 @@ julia> using DocstringTranslationGoogleTransBackend; @switchlang! :German; @doc 
 
   sin(A::AbstractMatrix)
 
-  Berechnen Sie die Matrix -Sinus einer quadratischen MatrixA.
+  Berechnen Sie den Matrixsinus einer quadratischen Matrix „A“.
 
-  WennAist symmetrisch oder hermitisch, seine Eigenschaft (eigen) wird verwendet, um den Sinus zu berechnen.Andernfalls wird der Sinus durch
-  Anruf bestimmtexp.
+  Wenn „A“ symmetrisch oder hermitesch ist, wird seine Eigenzerlegung
+  („eigen“) zur Berechnung des Sinus verwendet. Andernfalls wird der Sinus
+  durch den Aufruf von „exp“ ermittelt.
 
   Examples
   ≡≡≡≡≡≡≡≡
@@ -132,9 +165,9 @@ julia>
 julia> using DocstringTranslationGoogleTransBackend; @switchlang! :French; @doc sin
   sin(x)
 
-  Calculer la sinus dex, oùxest à Radians.
+  Calculez le sinus de x. Les unités de `x` sont les radians.
 
-  Voir aussisind,sinpi,sincos,cis,asin.
+  Voir aussi `sind`, `sinpi`, `sincos`, `cis`, `asin `.
 
   Examples
   ≡≡≡≡≡≡≡≡
@@ -160,10 +193,11 @@ julia> using DocstringTranslationGoogleTransBackend; @switchlang! :French; @doc 
 
   sin(A::AbstractMatrix)
 
-  Calculez la matrice sinus d'une matrice carréeA.
+  Calcule le sinus de la matrice carrée ``A``.
 
-  SiAest symétrique ou hermitien, sa composition eigenden (eigen) est utilisé pour calculer le sinus.Sinon, le sinus est déterminé en
-  appelantexp.
+  Si `A` est symétrique ou hermitien, sa décomposition propre (`eigen`) est
+  utilisée pour calculer le sinus. Sinon, le sinus est déterminé en
+  appelant exp.
 
   Examples
   ≡≡≡≡≡≡≡≡
